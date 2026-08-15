@@ -1,19 +1,106 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
 function Login() {
 
+  // Store the email entered by the user
   const [email, setEmail] = useState("");
+
+  // Store the password entered by the user
   const [password, setPassword] = useState("");
+
+  // Control whether the password is visible
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (event) => {
+  // Store error messages
+  const [error, setError] = useState("");
+
+  // Store loading state while login request is running
+  const [loading, setLoading] = useState(false);
+
+  // Used to navigate to another React page
+  const navigate = useNavigate();
+
+
+  // This function runs when the Login button is clicked
+  const handleSubmit = async (event) => {
+
+    // Prevent normal HTML form submission
     event.preventDefault();
 
-    console.log("Login submitted");
-    console.log("Email:", email);
-    console.log("Password:", password);
+    // Remove previous error message
+    setError("");
+
+    // Start loading
+    setLoading(true);
+
+    try {
+
+      // Send login request to Spring Boot backend
+      const response = await fetch("/api/auth/login", {
+
+        // HTTP method
+        method: "POST",
+
+        // Tell backend that we are sending JSON
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        // Convert JavaScript object into JSON
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+
+      // Convert backend response into JavaScript object
+      const data = await response.json();
+
+
+      // Check whether login was successful
+      if (!response.ok || !data.token) {
+
+        // Display backend error message
+        setError(data.message || "Login failed");
+
+        return;
+      }
+
+
+      // Store JWT token in browser localStorage
+      localStorage.setItem("token", data.token);
+
+      // Store user's email for later use
+      localStorage.setItem("userEmail", email);
+
+
+      // Login successful
+      console.log("Login successful");
+      console.log("JWT Token:", data.token);
+
+
+      // Move user to dashboard
+      navigate("/dashboard");
+
+    } catch (error) {
+
+      // Handle network/server errors
+      console.error("Login error:", error);
+
+      setError(
+        "Unable to connect to the server. Please try again."
+      );
+
+    } finally {
+
+      // Stop loading
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="login-page">
@@ -57,6 +144,7 @@ function Login() {
 
         </div>
 
+
         <div className="login-right">
 
           <div className="login-card">
@@ -66,6 +154,7 @@ function Login() {
             <p className="login-subtitle">
               Login to continue planning your journey.
             </p>
+
 
             <form onSubmit={handleSubmit}>
 
@@ -85,6 +174,7 @@ function Login() {
                 />
 
               </div>
+
 
               <div className="form-group">
 
@@ -115,26 +205,43 @@ function Login() {
 
               </div>
 
+
+              {/* Error message */}
+              {error && (
+                <p className="login-error">
+                  {error}
+                </p>
+              )}
+
+
               <div className="forgot-password">
+
                 <button type="button">
                   Forgot Password?
                 </button>
+
               </div>
+
 
               <button
                 type="submit"
                 className="login-button"
+                disabled={loading}
               >
-                Login
+                {loading ? "Logging in..." : "Login"}
               </button>
 
             </form>
 
+
             <p className="register-text">
+
               Don't have an account?
+
               <button type="button">
                 Create Account
               </button>
+
             </p>
 
           </div>
