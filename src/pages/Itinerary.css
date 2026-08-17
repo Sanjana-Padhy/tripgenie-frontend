@@ -1,0 +1,283 @@
+.itinerary-page {
+  min-height: 100vh;
+  padding: 60px 20px;
+  background: #f5f7fb;
+  box-sizing: border-box;
+}
+
+.itinerary-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* =====================================
+   HEADER
+===================================== */
+
+.itinerary-header {
+  margin-bottom: 35px;
+}
+
+.itinerary-label {
+  margin: 0 0 10px;
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.itinerary-header h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 42px;
+  line-height: 1.2;
+}
+
+.itinerary-header h1 span {
+  color: #8b5cf6;
+}
+
+.itinerary-description {
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 16px;
+}
+
+
+/* =====================================
+   SUMMARY
+===================================== */
+
+.trip-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  padding: 20px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+}
+
+.summary-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.summary-card strong {
+  color: #0f172a;
+  font-size: 18px;
+}
+
+
+/* =====================================
+   DAY CARD
+===================================== */
+
+.day-card {
+  margin-bottom: 25px;
+  padding: 28px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.day-header {
+  margin-bottom: 25px;
+}
+
+.day-number {
+  margin: 0 0 6px;
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.day-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+}
+
+
+/* =====================================
+   ACTIVITY
+===================================== */
+
+.activity-card {
+  display: flex;
+  gap: 18px;
+  padding: 20px 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.activity-number {
+  flex-shrink: 0;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #ede9fe;
+  color: #7c3aed;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.activity-top h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.activity-time {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.activity-location {
+  margin: 8px 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.activity-description {
+  margin: 8px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.activity-cost {
+  margin: 10px 0 0;
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+/* =====================================
+   ACTIONS
+===================================== */
+
+.itinerary-actions {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.back-button,
+.itinerary-empty button {
+  padding: 13px 25px;
+  border: none;
+  border-radius: 10px;
+
+  background: #7c3aed;
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.back-button:hover,
+.itinerary-empty button:hover {
+  background: #6d28d9;
+}
+
+
+/* =====================================
+   EMPTY STATE
+===================================== */
+
+.itinerary-empty {
+  max-width: 500px;
+  margin: 100px auto;
+  padding: 40px;
+  background: white;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.itinerary-empty h2 {
+  margin-bottom: 10px;
+  color: #0f172a;
+}
+
+.itinerary-empty p {
+  margin-bottom: 25px;
+  color: #64748b;
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 800px) {
+
+  .trip-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .itinerary-page {
+    padding: 35px 15px;
+  }
+
+  .itinerary-header h1 {
+    font-size: 32px;
+  }
+
+  .trip-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .day-card {
+    padding: 20px;
+  }
+
+  .activity-top {
+    flex-direction: column;
+  }
+
+  .activity-time {
+    align-self: flex-start;
+  }
+
+}

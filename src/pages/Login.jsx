@@ -79,7 +79,7 @@ function Login() {
 
       // Login successful
       console.log("Login successful");
-      console.log("JWT Token:", data.token);
+
 
 
       // Move user to dashboard

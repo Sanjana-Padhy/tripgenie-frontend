@@ -20,7 +20,8 @@ export default defineConfig({
         target: "http://localhost:8080",
 
         // Change the origin of the request
-        changeOrigin: true
+        changeOrigin: true,
+        secure: false
       }
     }
   }

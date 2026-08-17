@@ -8,6 +8,7 @@ import {
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import CreateTrip from "./pages/CreateTrip";
+import Itinerary from "./pages/Itinerary";
 
 import "./App.css";
 
@@ -35,6 +36,12 @@ function App() {
         <Route
           path="/create-trip"
           element={<CreateTrip />}
+        />
+
+        {/* Generated Itinerary page */}
+        <Route
+          path="/itinerary"
+          element={<Itinerary />}
         />
 
         {/* Default page */}

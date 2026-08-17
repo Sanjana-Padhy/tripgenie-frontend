@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./CreateTrip.css";
 
 function CreateTrip() {
+
+  const navigate = useNavigate();
 
   const [tripData, setTripData] = useState({
     source: "",
@@ -12,28 +15,246 @@ function CreateTrip() {
     travelStyle: ""
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+
+  // ============================================
+  // Handle form changes
+  // ============================================
+
   const handleChange = (event) => {
+
     const { name, value } = event.target;
 
-    setTripData({
-      ...tripData,
+    setTripData((previousData) => ({
+      ...previousData,
       [name]: value
-    });
+    }));
   };
 
-  const handleSubmit = (event) => {
+
+  // ============================================
+  // Generate itinerary
+  // ============================================
+
+  const handleSubmit = async (event) => {
+
     event.preventDefault();
 
-    console.log("Trip details submitted:");
-    console.log(tripData);
+    setError("");
+    setIsLoading(true);
+
+    try {
+
+      // ==========================================
+      // Get JWT token
+      // ==========================================
+
+      const token = localStorage.getItem("token");
+
+      console.log("JWT token exists:", !!token);
+
+      if (!token) {
+
+        setError(
+          "Your login session has expired. Please login again."
+        );
+
+        return;
+      }
+
+
+      // ==========================================
+      // Prepare request body
+      // ==========================================
+
+      const requestBody = {
+        source: tripData.source.trim(),
+        destination: tripData.destination.trim(),
+        days: Number(tripData.days),
+        budget: Number(tripData.budget),
+        travelers: Number(tripData.travelers),
+        travelStyle: tripData.travelStyle
+      };
+
+
+      console.log(
+        "Sending trip request:",
+        requestBody
+      );
+
+
+      // ==========================================
+      // Call Spring Boot through Vite proxy
+      // ==========================================
+
+      const response = await fetch(
+        "/api/ai/generate",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+
+          body: JSON.stringify(requestBody)
+        }
+      );
+
+
+      console.log(
+        "AI API response status:",
+        response.status
+      );
+
+
+      // ==========================================
+      // Handle Unauthorized
+      // ==========================================
+
+      if (response.status === 401) {
+
+        console.error(
+          "Backend rejected the JWT token."
+        );
+
+        /*
+         * Do NOT immediately delete the token while debugging.
+         * We want to inspect the backend first.
+         */
+
+        setError(
+          "Authentication failed. Please login again."
+        );
+
+        return;
+      }
+
+
+      // ==========================================
+      // Handle other errors
+      // ==========================================
+
+      if (!response.ok) {
+
+        let errorMessage =
+          `Request failed with status ${response.status}`;
+
+        try {
+
+          const contentType =
+            response.headers.get("content-type");
+
+          if (
+            contentType &&
+            contentType.includes("application/json")
+          ) {
+
+            const errorData =
+              await response.json();
+
+            if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+
+          } else {
+
+            const errorText =
+              await response.text();
+
+            if (errorText) {
+              console.error(
+                "Backend error:",
+                errorText
+              );
+            }
+          }
+
+        } catch (error) {
+
+          console.error(
+            "Could not read backend error:",
+            error
+          );
+        }
+
+        throw new Error(errorMessage);
+      }
+
+
+      // ==========================================
+      // Read successful response
+      // ==========================================
+
+      const itinerary =
+        await response.json();
+
+      console.log(
+        "AI itinerary generated successfully:"
+      );
+
+      console.log(itinerary);
+
+
+      // ==========================================
+      // Temporary success
+      // ==========================================
+
+// ==========================================
+// Navigate to itinerary page
+// ==========================================
+
+setError("");
+
+console.log(
+  "Navigating to itinerary page..."
+);
+
+navigate("/itinerary", {
+  state: itinerary
+});
+
+
+      /*
+       * Later:
+       *
+       * navigate("/itinerary", {
+       *   state: itinerary
+       * });
+       */
+
+    } catch (error) {
+
+      console.error(
+        "Failed to generate itinerary:",
+        error
+      );
+
+      setError(
+        error.message ||
+        "Unable to generate your trip. Please try again."
+      );
+
+    } finally {
+
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <div className="create-trip-page">
 
       <div className="create-trip-container">
 
+        {/* ======================================
+            HEADER
+        ====================================== */}
+
         <div className="create-trip-header">
+
           <p className="create-trip-label">
             PLAN YOUR JOURNEY
           </p>
@@ -43,17 +264,24 @@ function CreateTrip() {
           </h1>
 
           <p className="create-trip-description">
-            Tell us a few details about your trip and TripGenie AI
-            will create a personalized itinerary for you.
+            Tell us a few details about your trip and
+            TripGenie AI will create a personalized
+            itinerary for you.
           </p>
+
         </div>
+
+
+        {/* ======================================
+            FORM
+        ====================================== */}
 
         <form
           className="create-trip-form"
           onSubmit={handleSubmit}
         >
 
-          {/* Source */}
+          {/* Starting From */}
 
           <div className="form-group">
 
@@ -95,7 +323,7 @@ function CreateTrip() {
           </div>
 
 
-          {/* Days */}
+          {/* Number of Days */}
 
           <div className="form-group">
 
@@ -210,13 +438,41 @@ function CreateTrip() {
           </div>
 
 
-          {/* Submit */}
+          {/* ==================================
+              ERROR MESSAGE
+          ================================== */}
+
+          {error && (
+
+            <p
+              style={{
+                gridColumn: "1 / -1",
+                margin: "0",
+                color: "#dc2626",
+                fontSize: "14px",
+                textAlign: "center"
+              }}
+            >
+              {error}
+            </p>
+
+          )}
+
+
+          {/* ==================================
+              SUBMIT BUTTON
+          ================================== */}
 
           <button
             type="submit"
             className="generate-trip-button"
+            disabled={isLoading}
           >
-            Generate My Trip
+
+            {isLoading
+              ? "Generating Your Trip..."
+              : "Generate My Trip"}
+
           </button>
 
         </form>
