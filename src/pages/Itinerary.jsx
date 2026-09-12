@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Itinerary.css";
 
@@ -7,6 +8,15 @@ function Itinerary() {
   const navigate = useNavigate();
 
   const itinerary = location.state;
+
+  const [isSaved, setIsSaved] = useState(
+    itinerary?.saved || false
+  );
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [error, setError] = useState("");
+
 
   // If user directly opens /itinerary without generated data
   if (!itinerary) {
@@ -35,6 +45,67 @@ function Itinerary() {
       </div>
     );
   }
+
+
+  // Save or unsave itinerary
+  const handleSaveToggle = async () => {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (!itinerary.tripId) {
+      setError("Trip ID not found.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+
+      const url =
+        `http://localhost:8080/api/saved-itineraries/${itinerary.tripId}`;
+
+      const response = await fetch(url, {
+        method: isSaved ? "DELETE" : "POST",
+
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+
+      if (!response.ok) {
+
+        const errorMessage =
+          await response.text();
+
+        throw new Error(
+          errorMessage || "Failed to update saved itinerary."
+        );
+      }
+
+
+      setIsSaved(!isSaved);
+
+    } catch (error) {
+
+      console.error("Save itinerary error:", error);
+
+      setError(
+        error.message ||
+        "Something went wrong. Please try again."
+      );
+
+    } finally {
+
+      setIsSaving(false);
+    }
+  };
 
 
   return (
@@ -139,8 +210,6 @@ function Itinerary() {
               key={day.day}
             >
 
-              {/* Day Header */}
-
               <div className="day-header">
 
                 <div>
@@ -157,8 +226,6 @@ function Itinerary() {
 
               </div>
 
-
-              {/* Activities */}
 
               <div className="activities">
 
@@ -228,11 +295,31 @@ function Itinerary() {
         <div className="itinerary-actions">
 
           <button
+            className="save-button"
+            onClick={handleSaveToggle}
+            disabled={isSaving}
+          >
+            {isSaving
+              ? "Saving..."
+              : isSaved
+                ? "✓ Saved"
+                : "♡ Save Itinerary"}
+          </button>
+
+
+          <button
             className="back-button"
             onClick={() => navigate("/create-trip")}
           >
             Create Another Trip
           </button>
+
+
+          {error && (
+            <p className="save-error">
+              {error}
+            </p>
+          )}
 
         </div>
 

@@ -11,6 +11,7 @@
   margin: 0 auto;
 }
 
+
 /* =====================================
    HEADER
 ===================================== */
@@ -122,19 +123,14 @@
 
 .activity-number {
   flex-shrink: 0;
-
   width: 34px;
   height: 34px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 50%;
-
   background: #ede9fe;
   color: #7c3aed;
-
   font-size: 14px;
   font-weight: 700;
 }
@@ -196,24 +192,59 @@
   text-align: center;
 }
 
+
+/* =====================================
+   SAVE BUTTON
+===================================== */
+
+.save-button,
 .back-button,
 .itinerary-empty button {
   padding: 13px 25px;
   border: none;
   border-radius: 10px;
-
   background: #7c3aed;
   color: white;
-
   font-size: 15px;
   font-weight: 600;
-
   cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
 }
 
+.save-button:hover,
 .back-button:hover,
 .itinerary-empty button:hover {
   background: #6d28d9;
+}
+
+
+/* =====================================
+   SAVE BUTTON - DISABLED
+===================================== */
+
+.save-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+
+/* =====================================
+   BACK BUTTON
+===================================== */
+
+.back-button {
+  margin-left: 12px;
+}
+
+
+/* =====================================
+   SAVE ERROR
+===================================== */
+
+.save-error {
+  margin: 15px 0 0;
+  color: #dc2626;
+  font-size: 14px;
 }
 
 
@@ -247,12 +278,11 @@
 ===================================== */
 
 @media (max-width: 800px) {
-
   .trip-summary {
     grid-template-columns: 1fr 1fr;
   }
-
 }
+
 
 @media (max-width: 600px) {
 
@@ -280,4 +310,22 @@
     align-self: flex-start;
   }
 
+  /* Stack action buttons on small screens */
+  .itinerary-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .save-button,
+  .back-button {
+    width: 100%;
+    max-width: 300px;
+    margin: 0;
+  }
+
+  .save-error {
+    max-width: 300px;
+  }
 }
