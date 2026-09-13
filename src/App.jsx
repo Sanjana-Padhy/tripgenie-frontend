@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateTrip from "./pages/CreateTrip";
 import Itinerary from "./pages/Itinerary";
 import MyTrips from "./pages/MyTrips";
+import Profile from "./pages/Profile";
 
 import "./App.css";
 
@@ -43,6 +44,12 @@ function App() {
         <Route
           path="/my-trips"
           element={<MyTrips />}
+        />
+
+        {/* Profile page */}
+        <Route
+          path="/profile"
+          element={<Profile />}
         />
 
         {/* Create Trip page */}
