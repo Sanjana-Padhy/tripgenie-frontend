@@ -1,94 +1,73 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Login.css";
+import "./Register.css";
 
-function Login() {
+function Register() {
 
-  // Store the email entered by the user
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-
-  // Store the password entered by the user
   const [password, setPassword] = useState("");
 
-  // Control whether the password is visible
   const [showPassword, setShowPassword] = useState(false);
 
-  // Store error messages
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Store loading state while login request is running
   const [loading, setLoading] = useState(false);
 
-  // Used to navigate to another React page
   const navigate = useNavigate();
 
 
-  // This function runs when the Login button is clicked
   const handleSubmit = async (event) => {
 
-    // Prevent normal HTML form submission
     event.preventDefault();
 
-    // Remove previous error message
     setError("");
-
-    // Start loading
+    setSuccess("");
     setLoading(true);
 
     try {
 
-      // Send login request to Spring Boot backend
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/register", {
 
-        // HTTP method
         method: "POST",
 
-        // Tell backend that we are sending JSON
         headers: {
           "Content-Type": "application/json"
         },
 
-        // Convert JavaScript object into JSON
         body: JSON.stringify({
+          fullName: fullName,
           email: email,
           password: password
         })
       });
 
 
-      // Convert backend response into JavaScript object
-      const data = await response.json();
+      const data = await response.text();
 
 
-      // Check whether login was successful
-      if (!response.ok || !data.token) {
+      if (!response.ok) {
 
-        // Display backend error message
-        setError(data.message || "Login failed");
+        setError(data || "Registration failed.");
 
         return;
       }
 
 
-      // Store JWT token in browser localStorage
-      localStorage.setItem("token", data.token);
-
-      // Store user's email for later use
-      localStorage.setItem("userEmail", email);
+      setSuccess(
+        data || "Registration successful. Please login."
+      );
 
 
-      // Login successful
-      console.log("Login successful");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
 
-
-
-      // Move user to dashboard
-      navigate("/dashboard");
 
     } catch (error) {
 
-      // Handle network/server errors
-      console.error("Login error:", error);
+      console.error("Registration error:", error);
 
       setError(
         "Unable to connect to the server. Please try again."
@@ -96,31 +75,30 @@ function Login() {
 
     } finally {
 
-      // Stop loading
       setLoading(false);
     }
   };
 
 
   return (
-    <div className="login-page">
+    <div className="register-page">
 
-      <div className="login-container">
+      <div className="register-container">
 
-        <div className="login-left">
+        <div className="register-left">
 
           <div className="brand">
             TripGenie AI
           </div>
 
           <h1>
-            Plan your perfect trip
-            <span> with AI.</span>
+            Start planning your
+            <span> perfect trip.</span>
           </h1>
 
           <p>
-            Create personalized travel itineraries based on your
-            destination, budget, travel style and number of days.
+            Create an account and let TripGenie AI
+            create personalized travel itineraries for you.
           </p>
 
           <div className="feature-list">
@@ -145,18 +123,38 @@ function Login() {
         </div>
 
 
-        <div className="login-right">
+        <div className="register-right">
 
-          <div className="login-card">
+          <div className="register-card">
 
-            <h2>Welcome back</h2>
+            <h2>Create Account</h2>
 
-            <p className="login-subtitle">
-              Login to continue planning your journey.
+            <p className="register-subtitle">
+              Create an account to start planning your journey.
             </p>
 
 
             <form onSubmit={handleSubmit}>
+
+              <div className="form-group">
+
+                <label htmlFor="fullName">
+                  Full Name
+                </label>
+
+                <input
+                  id="fullName"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={fullName}
+                  onChange={(event) =>
+                    setFullName(event.target.value)
+                  }
+                  required
+                />
+
+              </div>
+
 
               <div className="form-group">
 
@@ -169,7 +167,9 @@ function Login() {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) =>
+                    setEmail(event.target.value)
+                  }
                   required
                 />
 
@@ -186,64 +186,76 @@ function Login() {
 
                   <input
                     id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    placeholder="Enter password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={(event) =>
+                      setPassword(event.target.value)
+                    }
                     required
+                    minLength="6"
                   />
 
                   <button
                     type="button"
                     className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() =>
+                      setShowPassword(!showPassword)
+                    }
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
 
                 </div>
 
+                <small>
+                  Password must contain at least 6 characters.
+                </small>
+
               </div>
 
 
-              {/* Error message */}
               {error && (
-                <p className="login-error">
+                <p className="register-error">
                   {error}
                 </p>
               )}
 
 
-              <div className="forgot-password">
-
-                <button type="button">
-                  Forgot Password?
-                </button>
-
-              </div>
+              {success && (
+                <p className="register-success">
+                  {success}
+                </p>
+              )}
 
 
               <button
                 type="submit"
-                className="login-button"
+                className="register-button"
                 disabled={loading}
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading
+                  ? "Creating Account..."
+                  : "Create Account"}
               </button>
 
             </form>
 
 
-            <p className="register-text">
+            <p className="login-text">
 
-              Don't have an account?
+              Already have an account?
 
               <button
-  type="button"
-  onClick={() => navigate("/register")}
->
-  Create Account
-</button>
+                type="button"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </button>
 
             </p>
 
@@ -257,4 +269,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Register;

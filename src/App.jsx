@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateTrip from "./pages/CreateTrip";
 import Itinerary from "./pages/Itinerary";
@@ -24,6 +25,12 @@ function App() {
         <Route
           path="/login"
           element={<Login />}
+        />
+
+        {/* Register page */}
+        <Route
+          path="/register"
+          element={<Register />}
         />
 
         {/* Dashboard page */}
