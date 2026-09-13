@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
@@ -5,16 +6,93 @@ function Dashboard() {
 
   const navigate = useNavigate();
 
+  // Store dashboard data received from backend
+  const [dashboardData, setDashboardData] = useState(null);
+
+  // Store loading state
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Store error message
+  const [error, setError] = useState("");
+
+  // ==================== Get Dashboard Data ====================
+  useEffect(() => {
+
+    const fetchDashboardData = async () => {
+
+      const token = localStorage.getItem("token");
+
+      // If user is not logged in
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+
+        const response = await fetch("/api/dashboard", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // JWT expired or unauthorized
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to load dashboard data");
+        }
+
+        const data = await response.json();
+
+       console.log("Dashboard data:", JSON.stringify(data, null, 2));
+
+        setDashboardData(data);
+
+      } catch (error) {
+
+        console.error("Dashboard error:", error);
+        setError(error.message);
+
+      } finally {
+
+        setIsLoading(false);
+
+      }
+    };
+
+    fetchDashboardData();
+
+  }, [navigate]);
+
+
   // Navigate to Create Trip page
   const handleCreateTrip = () => {
     navigate("/create-trip");
   };
+
 
   // Logout user
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
+
+
+  // ==================== Loading ====================
+  if (isLoading) {
+    return (
+      <div className="dashboard-page">
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="dashboard-page">
@@ -104,6 +182,14 @@ function Dashboard() {
         </section>
 
 
+        {/* ==================== Error Message ==================== */}
+        {error && (
+          <p className="dashboard-error">
+            {error}
+          </p>
+        )}
+
+
         {/* ==================== Statistics ==================== */}
         <section className="stats-grid">
 
@@ -117,7 +203,7 @@ function Dashboard() {
 
             <div>
               <p>Total Trips</p>
-              <h2>0</h2>
+              <h2>{dashboardData?.totalTrips ?? 0}</h2>
             </div>
 
           </div>
@@ -132,7 +218,7 @@ function Dashboard() {
 
             <div>
               <p>Saved Trips</p>
-              <h2>0</h2>
+              <h2>{dashboardData?.savedTrips ?? 0}</h2>
             </div>
 
           </div>
@@ -147,7 +233,9 @@ function Dashboard() {
 
             <div>
               <p>Total Budget</p>
-              <h2>₹0</h2>
+              <h2>
+                ₹{dashboardData?.totalBudget ?? 0}
+              </h2>
             </div>
 
           </div>
@@ -186,32 +274,67 @@ function Dashboard() {
           </div>
 
 
-          {/* ==================== Empty State ==================== */}
-          <div className="empty-trips">
+          {/* ==================== Recent Trips List ==================== */}
 
-            <div className="empty-icon">
-              ✈
+          {dashboardData?.recentTrips?.length > 0 ? (
+
+            <div className="recent-trips-list">
+
+              {dashboardData.recentTrips.map((trip) => (
+
+                <div
+                  className="recent-trip-card"
+                  key={trip.id}
+                >
+
+                  <div>
+                    <h3>{trip.destination}</h3>
+
+                    <p>
+                      ₹{trip.budget} · {trip.travelStyle}
+                    </p>
+
+                    <p>
+                      Status: {trip.status}
+                    </p>
+                  </div>
+
+                </div>
+
+              ))}
+
             </div>
 
-            <h3>
-              No trips yet
-            </h3>
+          ) : (
 
-            <p>
-              Start planning your first trip and let TripGenie AI
-              create a personalized itinerary for you.
-            </p>
+            /* ==================== Empty State ==================== */
+            <div className="empty-trips">
+
+              <div className="empty-icon">
+                ✈
+              </div>
+
+              <h3>
+                No trips yet
+              </h3>
+
+              <p>
+                Start planning your first trip and let TripGenie AI
+                create a personalized itinerary for you.
+              </p>
 
 
-            {/* Create First Trip */}
-            <button
-              className="empty-create-button"
-              onClick={handleCreateTrip}
-            >
-              Create Your First Trip
-            </button>
+              {/* Create First Trip */}
+              <button
+                className="empty-create-button"
+                onClick={handleCreateTrip}
+              >
+                Create Your First Trip
+              </button>
 
-          </div>
+            </div>
+
+          )}
 
         </section>
 
