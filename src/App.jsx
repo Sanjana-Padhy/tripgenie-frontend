@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateTrip from "./pages/CreateTrip";
 import Itinerary from "./pages/Itinerary";
+import MyTrips from "./pages/MyTrips";
 
 import "./App.css";
 
@@ -39,6 +40,11 @@ function App() {
           element={<Dashboard />}
         />
 
+        <Route
+          path="/my-trips"
+          element={<MyTrips />}
+        />
+
         {/* Create Trip page */}
         <Route
           path="/create-trip"
@@ -50,6 +56,8 @@ function App() {
           path="/itinerary"
           element={<Itinerary />}
         />
+
+        
 
         {/* Default page */}
         <Route
