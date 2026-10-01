@@ -13,6 +13,8 @@ import Itinerary from "./pages/Itinerary";
 import MyTrips from "./pages/MyTrips";
 import Profile from "./pages/Profile";
 
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import "./App.css";
 
 function App() {
@@ -36,33 +38,51 @@ function App() {
         />
 
         {/* Dashboard page */}
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
 
-        <Route
-          path="/my-trips"
-          element={<MyTrips />}
-        />
+<Route
+  path="/my-trips"
+  element={
+    <ProtectedRoute>
+      <MyTrips />
+    </ProtectedRoute>
+  }
+/>
 
-        {/* Profile page */}
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
+<Route
+  path="/profile"
+  element={
+    <ProtectedRoute>
+      <Profile />
+    </ProtectedRoute>
+  }
+/>
 
-        {/* Create Trip page */}
-        <Route
-          path="/create-trip"
-          element={<CreateTrip />}
-        />
+<Route
+  path="/create-trip"
+  element={
+    <ProtectedRoute>
+      <CreateTrip />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Generated Itinerary page */}
-        <Route
-          path="/itinerary"
-          element={<Itinerary />}
-        />
+<Route
+  path="/itinerary"
+  element={
+    <ProtectedRoute>
+      <Itinerary />
+    </ProtectedRoute>
+  }
+/>
 
         
 
