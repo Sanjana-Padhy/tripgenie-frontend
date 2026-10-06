@@ -4,108 +4,161 @@ import "./Itinerary.css";
 
 function Itinerary() {
 
-  const location = useLocation();
-  const navigate = useNavigate();
+ const location = useLocation();
+const navigate = useNavigate();
 
-  const itinerary = location.state;
+const itinerary = location.state;
 
-  const [isSaved, setIsSaved] = useState(
-    itinerary?.saved || false
-  );
+const isValidItinerary =
+  itinerary &&
+  typeof itinerary === "object" &&
+  itinerary.destination &&
+  Array.isArray(itinerary.days) &&
+  itinerary.days.length > 0;
 
-  const [isSaving, setIsSaving] = useState(false);
+const [isSaved, setIsSaved] = useState(
+  itinerary?.saved || false
+);
 
-  const [error, setError] = useState("");
+const [isSaving, setIsSaving] = useState(false);
+
+const [error, setError] = useState("");
 
 
   // If user directly opens /itinerary without generated data
-  if (!itinerary) {
+if (!isValidItinerary) {
 
-    return (
-      <div className="itinerary-page">
+  return (
+    <div className="itinerary-page">
 
-        <div className="itinerary-empty">
+      <div className="itinerary-empty">
 
-          <h2>
-            No itinerary found
-          </h2>
+        <h2>
+          No valid itinerary found
+        </h2>
 
-          <p>
-            Please generate a trip first.
-          </p>
+        <p>
+          Please generate a trip first.
+        </p>
 
-          <button
-            onClick={() => navigate("/create-trip")}
-          >
-            Create a Trip
-          </button>
-
-        </div>
+        <button
+          onClick={() => navigate("/create-trip")}
+        >
+          Create a Trip
+        </button>
 
       </div>
-    );
-  }
+
+    </div>
+  );
+}
 
 
   // Save or unsave itinerary
-  const handleSaveToggle = async () => {
+const handleSaveToggle = async () => {
 
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    if (!token) {
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+
+  if (!itinerary.tripId) {
+    setError("Trip ID not found.");
+    return;
+  }
+
+  setIsSaving(true);
+  setError("");
+
+  try {
+
+    const url =
+      `/api/saved-itineraries/${itinerary.tripId}`;
+
+    const response = await fetch(url, {
+      method: isSaved ? "DELETE" : "POST",
+
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    // Handle expired/invalid JWT
+    if (response.status === 401) {
+
+      localStorage.removeItem("token");
+
       navigate("/login");
+
       return;
     }
 
-    if (!itinerary.tripId) {
-      setError("Trip ID not found.");
-      return;
-    }
+    // Handle other backend errors
+    if (!response.ok) {
 
-    setIsSaving(true);
-    setError("");
+      let errorMessage =
+        `Request failed with status ${response.status}`;
 
-    try {
+      try {
 
-      const url =
-        `http://localhost:8080/api/saved-itineraries/${itinerary.tripId}`;
+        const contentType =
+          response.headers.get("content-type");
 
-      const response = await fetch(url, {
-        method: isSaved ? "DELETE" : "POST",
+        if (
+          contentType &&
+          contentType.includes("application/json")
+        ) {
 
-        headers: {
-          Authorization: `Bearer ${token}`
+          const errorData =
+            await response.json();
+
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+
+        } else {
+
+          const errorText =
+            await response.text();
+
+          if (errorText) {
+            errorMessage = errorText;
+          }
         }
-      });
 
+      } catch (error) {
 
-      if (!response.ok) {
-
-        const errorMessage =
-          await response.text();
-
-        throw new Error(
-          errorMessage || "Failed to update saved itinerary."
+        console.error(
+          "Could not read save/unsave error:",
+          error
         );
       }
 
-
-      setIsSaved(!isSaved);
-
-    } catch (error) {
-
-      console.error("Save itinerary error:", error);
-
-      setError(
-        error.message ||
-        "Something went wrong. Please try again."
-      );
-
-    } finally {
-
-      setIsSaving(false);
+      throw new Error(errorMessage);
     }
-  };
+
+    // Toggle saved state only after successful API response
+    setIsSaved((previousSaved) => !previousSaved);
+
+  } catch (error) {
+
+    console.error(
+      "Save/unsave itinerary error:",
+      error
+    );
+
+    setError(
+      error.message ||
+      "Something went wrong. Please try again."
+    );
+
+  } finally {
+
+    setIsSaving(false);
+  }
+};
 
 
   return (
@@ -300,10 +353,12 @@ function Itinerary() {
             disabled={isSaving}
           >
             {isSaving
-              ? "Saving..."
-              : isSaved
-                ? "✓ Saved"
-                : "♡ Save Itinerary"}
+  ? isSaved
+    ? "Removing..."
+    : "Saving..."
+  : isSaved
+    ? "✓ Saved"
+    : "♡ Save Itinerary"}
           </button>
 
 

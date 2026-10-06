@@ -24,18 +24,39 @@ function Login() {
 
 
   // This function runs when the Login button is clicked
-  const handleSubmit = async (event) => {
+const handleSubmit = async (event) => {
 
-    // Prevent normal HTML form submission
-    event.preventDefault();
+  // Prevent normal HTML form submission
+  event.preventDefault();
 
-    // Remove previous error message
-    setError("");
+  // Remove previous error message
+  setError("");
 
-    // Start loading
-    setLoading(true);
+  // Remove accidental spaces from the email
+  const trimmedEmail = email.trim();
 
-    try {
+  // Check whether email is empty
+  if (!trimmedEmail) {
+    setError("Please enter your email.");
+    return;
+  }
+
+  // Check whether email has a valid format
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+
+  // Check whether password is empty or contains only spaces
+  if (!password.trim()) {
+    setError("Please enter your password.");
+    return;
+  }
+
+  // Start loading only after validation succeeds
+  setLoading(true);
+
+  try {
 
       // Send login request to Spring Boot backend
       const response = await fetch("/api/auth/login", {
@@ -57,17 +78,23 @@ function Login() {
 
 
       // Convert backend response into JavaScript object
-      const data = await response.json();
+      let data = {};
+
+try {
+  data = await response.json();
+} catch {
+  data = {};
+}
 
 
-      // Check whether login was successful
-      if (!response.ok || !data.token) {
+// Check whether login was successful
+if (!response.ok || !data.token) {
 
-        // Display backend error message
-        setError(data.message || "Login failed");
+  // Display backend error message
+  setError(data.message || "Login failed. Please check your email and password.");
 
-        return;
-      }
+  return;
+}
 
 
       // Store JWT token in browser localStorage

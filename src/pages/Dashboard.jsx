@@ -20,51 +20,114 @@ function Dashboard() {
 
     const fetchDashboardData = async () => {
 
-      const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-      // If user is not logged in
-      if (!token) {
-        navigate("/login");
-        return;
-      }
+  // If user is not logged in
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+
+  setIsLoading(true);
+  setError("");
+
+  try {
+
+    const response = await fetch("/api/dashboard", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(
+      "Dashboard API response status:",
+      response.status
+    );
+
+    // JWT expired or unauthorized
+    if (response.status === 401) {
+
+      localStorage.removeItem("token");
+
+      navigate("/login");
+
+      return;
+    }
+
+    // Handle other backend errors
+    if (!response.ok) {
+
+      let errorMessage =
+        `Failed to load dashboard. Status: ${response.status}`;
 
       try {
 
-        const response = await fetch("/api/dashboard", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const contentType =
+          response.headers.get("content-type");
 
-        // JWT expired or unauthorized
-        if (response.status === 401) {
-          localStorage.removeItem("token");
-          navigate("/login");
-          return;
+        if (
+          contentType &&
+          contentType.includes("application/json")
+        ) {
+
+          const errorData =
+            await response.json();
+
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+
+        } else {
+
+          const errorText =
+            await response.text();
+
+          if (errorText) {
+            errorMessage = errorText;
+          }
         }
-
-        if (!response.ok) {
-          throw new Error("Failed to load dashboard data");
-        }
-
-        const data = await response.json();
-
-       console.log("Dashboard data:", JSON.stringify(data, null, 2));
-
-        setDashboardData(data);
 
       } catch (error) {
 
-        console.error("Dashboard error:", error);
-        setError(error.message);
-
-      } finally {
-
-        setIsLoading(false);
-
+        console.error(
+          "Could not read dashboard error:",
+          error
+        );
       }
-    };
+
+      throw new Error(errorMessage);
+    }
+
+    // Read successful response
+    const data = await response.json();
+
+    console.log(
+      "Dashboard data:",
+      JSON.stringify(data, null, 2)
+    );
+
+    setDashboardData(data);
+
+  } catch (error) {
+
+    console.error(
+      "Dashboard error:",
+      error
+    );
+
+    setDashboardData(null);
+
+    setError(
+      error.message ||
+      "Unable to load dashboard. Please try again."
+    );
+
+  } finally {
+
+    setIsLoading(false);
+  }
+};
 
     fetchDashboardData();
 
@@ -92,6 +155,33 @@ function Dashboard() {
       </div>
     );
   }
+
+  if (error && !dashboardData) {
+  return (
+    <div className="dashboard-page">
+
+      <div className="dashboard-error-state">
+
+        <h2>
+          Unable to load dashboard
+        </h2>
+
+        <p>
+          {error}
+        </p>
+
+        <button
+          className="create-trip-button"
+          onClick={() => window.location.reload()}
+        >
+          Try Again
+        </button>
+
+      </div>
+
+    </div>
+  );
+}
 
 
   return (

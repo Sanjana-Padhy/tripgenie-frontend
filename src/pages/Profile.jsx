@@ -29,70 +29,93 @@ function Profile() {
 
   useEffect(() => {
 
-    const fetchProfile = async () => {
+const fetchProfile = async () => {
+  const token = localStorage.getItem("token");
 
-      const token = localStorage.getItem("token");
+  if (!token) {
+    navigate("/login");
+    return;
+  }
 
-      // If user is not logged in
-      if (!token) {
-        navigate("/login");
-        return;
-      }
+  setIsLoading(true);
+  setError("");
+
+  try {
+    const response = await fetch("/api/user/profile", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("Profile API response status:", response.status);
+
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      navigate("/login");
+      return;
+    }
+
+    if (!response.ok) {
+      let errorMessage = `Failed to load profile. Status: ${response.status}`;
 
       try {
+        const contentType = response.headers.get("content-type");
 
-        // Call Spring Boot profile API
-        const response = await fetch("/api/user/profile", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        if (
+          contentType &&
+          contentType.includes("application/json")
+        ) {
+          const errorData = await response.json();
 
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } else {
+          const errorText = await response.text();
 
-        // JWT expired or unauthorized
-        if (response.status === 401) {
-
-          localStorage.removeItem("token");
-
-          navigate("/login");
-
-          return;
+          if (errorText) {
+            errorMessage = errorText;
+          }
         }
-
-
-        if (!response.ok) {
-          throw new Error("Failed to load profile");
-        }
-
-
-        // Convert JSON response into JavaScript object
-        const data = await response.json();
-
-        console.log(
-          "Profile data:",
-          JSON.stringify(data, null, 2)
-        );
-
-
-        // Store profile data
-        setProfile(data);
-
-        // Put existing name into input field
-        setFullName(data.fullName);
-
       } catch (error) {
-
-        console.error("Profile error:", error);
-
-        setError(error.message);
-
-      } finally {
-
-        setIsLoading(false);
-
+        console.error(
+          "Could not read profile error:",
+          error
+        );
       }
-    };
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+
+    console.log(
+      "Profile data:",
+      JSON.stringify(data, null, 2)
+    );
+
+    if (!data || !data.email) {
+      throw new Error("Invalid profile data received.");
+    }
+
+    setProfile(data);
+    setFullName(data.fullName || "");
+
+  } catch (error) {
+    console.error("Profile error:", error);
+
+    setProfile(null);
+
+    setError(
+      error.message ||
+      "Unable to load profile. Please try again."
+    );
+
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
     fetchProfile();
@@ -102,84 +125,114 @@ function Profile() {
 
   // ==================== Update Profile ====================
 
-  const handleUpdate = async (event) => {
+const handleUpdate = async (event) => {
+  event.preventDefault();
 
-    // Prevent page refresh
-    event.preventDefault();
+  setError("");
+  setSuccess("");
 
-    // Clear old messages
-    setError("");
-    setSuccess("");
+  const trimmedName = fullName.trim();
 
-    // Start update loading
-    setIsUpdating(true);
+  if (!trimmedName) {
+    setError("Please enter your full name.");
+    return;
+  }
 
+  if (trimmedName.length < 2) {
+    setError("Full name must be at least 2 characters.");
+    return;
+  }
+
+  if (!profile?.email) {
+    setError("Profile information is not available.");
+    return;
+  }
+
+  setIsUpdating(true);
+
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const response = await fetch("/api/user/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        fullName: trimmedName,
+        email: profile.email,
+      }),
+    });
+
+    console.log(
+      "Update profile API response status:",
+      response.status
+    );
+
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      navigate("/login");
+      return;
+    }
+
+    let data = null;
 
     try {
+      const contentType = response.headers.get("content-type");
 
-      const token = localStorage.getItem("token");
+      if (
+        contentType &&
+        contentType.includes("application/json")
+      ) {
+        data = await response.json();
+      } else {
+        const responseText = await response.text();
 
-
-      // Send updated profile to backend
-      const response = await fetch("/api/user/profile", {
-
-        method: "PUT",
-
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-
-        body: JSON.stringify({
-          fullName: fullName,
-          email: profile.email,
-        }),
-      });
-
-
-      // JWT expired
-      if (response.status === 401) {
-
-        localStorage.removeItem("token");
-
-        navigate("/login");
-
-        return;
+        if (responseText) {
+          data = { message: responseText };
+        }
       }
-
-
-      const data = await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.message || "Failed to update profile"
-        );
-      }
-
-
-      // Update profile shown on screen
-      setProfile(data);
-
-      setFullName(data.fullName);
-
-
-      // Show success message
-      setSuccess("Profile updated successfully.");
-
     } catch (error) {
-
-      console.error("Update profile error:", error);
-
-      setError(error.message);
-
-    } finally {
-
-      setIsUpdating(false);
-
+      console.error(
+        "Could not read update profile response:",
+        error
+      );
     }
-  };
+
+    if (!response.ok) {
+      throw new Error(
+        data?.message ||
+        `Failed to update profile. Status: ${response.status}`
+      );
+    }
+
+    if (!data) {
+      throw new Error("Invalid response received from server.");
+    }
+
+    setProfile(data);
+    setFullName(data.fullName || trimmedName);
+
+    setSuccess("Profile updated successfully.");
+
+  } catch (error) {
+    console.error("Update profile error:", error);
+
+    setError(
+      error.message ||
+      "Unable to update profile. Please try again."
+    );
+
+  } finally {
+    setIsUpdating(false);
+  }
+};
 
 
   // ==================== Logout ====================
@@ -204,6 +257,25 @@ function Profile() {
       </div>
     );
   }
+
+  if (error && !profile) {
+  return (
+    <div className="profile-page">
+      <div className="profile-error-state">
+        <h2>Unable to load profile</h2>
+
+        <p>{error}</p>
+
+        <button
+          className="profile-retry-button"
+          onClick={() => window.location.reload()}
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
+}
 
 
   // ==================== Profile Page ====================

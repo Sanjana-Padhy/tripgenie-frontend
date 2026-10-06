@@ -18,66 +18,112 @@ function Register() {
   const navigate = useNavigate();
 
 
-  const handleSubmit = async (event) => {
+const handleSubmit = async (event) => {
 
-    event.preventDefault();
+  // Prevent normal HTML form submission
+  event.preventDefault();
 
-    setError("");
-    setSuccess("");
-    setLoading(true);
+  // Clear previous messages
+  setError("");
+  setSuccess("");
 
-    try {
+  // Remove accidental spaces
+  const trimmedFullName = fullName.trim();
+  const trimmedEmail = email.trim();
 
-      const response = await fetch("/api/auth/register", {
+  // Validate full name
+  if (!trimmedFullName) {
+    setError("Please enter your full name.");
+    return;
+  }
 
-        method: "POST",
+  // Validate full name length
+  if (trimmedFullName.length < 2) {
+    setError("Full name must contain at least 2 characters.");
+    return;
+  }
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+  // Validate email
+  if (!trimmedEmail) {
+    setError("Please enter your email.");
+    return;
+  }
 
-        body: JSON.stringify({
-          fullName: fullName,
-          email: email,
-          password: password
-        })
-      });
+  // Check email format
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
 
+  // Validate password
+  if (!password.trim()) {
+    setError("Please enter your password.");
+    return;
+  }
 
-      const data = await response.text();
+  // Check minimum password length
+  if (password.length < 6) {
+    setError("Password must contain at least 6 characters.");
+    return;
+  }
 
+  // Start loading only after validation succeeds
+  setLoading(true);
 
-      if (!response.ok) {
+  try {
 
-        setError(data || "Registration failed.");
+    // Send registration request to Spring Boot backend
+    const response = await fetch("/api/auth/register", {
 
-        return;
-      }
+      method: "POST",
 
+      headers: {
+        "Content-Type": "application/json"
+      },
 
-      setSuccess(
-        data || "Registration successful. Please login."
-      );
+      body: JSON.stringify({
+        fullName: trimmedFullName,
+        email: trimmedEmail,
+        password: password
+      })
+    });
 
+    // Registration endpoint currently returns text
+    const data = await response.text();
 
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+    // Check whether registration failed
+    if (!response.ok) {
 
+      setError(data || "Registration failed.");
 
-    } catch (error) {
-
-      console.error("Registration error:", error);
-
-      setError(
-        "Unable to connect to the server. Please try again."
-      );
-
-    } finally {
-
-      setLoading(false);
+      return;
     }
-  };
+
+    // Registration successful
+    setSuccess(
+      data || "Registration successful. Please login."
+    );
+
+    // Redirect to login after showing success message
+    setTimeout(() => {
+      navigate("/login");
+    }, 1500);
+
+  } catch (error) {
+
+    // Handle network/server errors
+    console.error("Registration error:", error);
+
+    setError(
+      "Unable to connect to the server. Please try again."
+    );
+
+  } finally {
+
+    // Stop loading
+    setLoading(false);
+  }
+};
 
 
   return (

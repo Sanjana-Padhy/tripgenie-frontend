@@ -447,3 +447,24 @@
   }
 
 }
+.dashboard-error-state {
+  max-width: 500px;
+  margin: 100px auto;
+  padding: 40px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-error-state h2 {
+  margin: 0 0 10px;
+  color: #0f172a;
+}
+
+.dashboard-error-state p {
+  margin: 0 0 25px;
+  color: #64748b;
+  font-size: 14px;
+}

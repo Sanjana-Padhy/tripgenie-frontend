@@ -42,8 +42,61 @@ function CreateTrip() {
 
     event.preventDefault();
 
-    setError("");
-    setIsLoading(true);
+setError("");
+
+// Remove accidental spaces from text fields
+const source = tripData.source.trim();
+const destination = tripData.destination.trim();
+
+// Convert numeric fields to numbers
+const days = Number(tripData.days);
+const budget = Number(tripData.budget);
+const travelers = Number(tripData.travelers);
+
+// Validate starting location
+if (!source) {
+  setError("Please enter your starting location.");
+  return;
+}
+
+// Validate destination
+if (!destination) {
+  setError("Please enter your destination.");
+  return;
+}
+
+// Make sure source and destination are different
+if (source.toLowerCase() === destination.toLowerCase()) {
+  setError("Starting location and destination cannot be the same.");
+  return;
+}
+
+// Validate number of days
+if (!Number.isInteger(days) || days < 1) {
+  setError("Number of days must be at least 1.");
+  return;
+}
+
+// Validate budget
+if (!Number.isFinite(budget) || budget <= 0) {
+  setError("Please enter a valid budget greater than 0.");
+  return;
+}
+
+// Validate travelers
+if (!Number.isInteger(travelers) || travelers < 1) {
+  setError("Number of travelers must be at least 1.");
+  return;
+}
+
+// Validate travel style
+if (!tripData.travelStyle) {
+  setError("Please select a travel style.");
+  return;
+}
+
+// Start loading only after validation succeeds
+setIsLoading(true);
 
     try {
 
@@ -70,13 +123,13 @@ function CreateTrip() {
       // ==========================================
 
       const requestBody = {
-        source: tripData.source.trim(),
-        destination: tripData.destination.trim(),
-        days: Number(tripData.days),
-        budget: Number(tripData.budget),
-        travelers: Number(tripData.travelers),
-        travelStyle: tripData.travelStyle
-      };
+  source: source,
+  destination: destination,
+  days: days,
+  budget: budget,
+  travelers: travelers,
+  travelStyle: tripData.travelStyle
+};
 
 
       console.log(
@@ -114,23 +167,18 @@ function CreateTrip() {
       // Handle Unauthorized
       // ==========================================
 
-      if (response.status === 401) {
+    if (response.status === 401) {
+  console.error("Backend rejected the JWT token.");
 
-        console.error(
-          "Backend rejected the JWT token."
-        );
+  localStorage.removeItem("token");
 
-        /*
-         * Do NOT immediately delete the token while debugging.
-         * We want to inspect the backend first.
-         */
+  setError(
+    "Your login session has expired. Please login again."
+  );
 
-        setError(
-          "Authentication failed. Please login again."
-        );
-
-        return;
-      }
+  navigate("/login");
+  return;
+}
 
 
       // ==========================================
@@ -160,21 +208,17 @@ function CreateTrip() {
             }
 
           } else {
+  const errorText = await response.text();
 
-            const errorText =
-              await response.text();
-
-            if (errorText) {
-              console.error(
-                "Backend error:",
-                errorText
-              );
-            }
-          }
+  if (errorText) {
+    console.error("Backend error:", errorText);
+    errorMessage = errorText;
+  }
+}
 
         } catch (error) {
 
-          console.error(
+          console.error( 
             "Could not read backend error:",
             error
           );

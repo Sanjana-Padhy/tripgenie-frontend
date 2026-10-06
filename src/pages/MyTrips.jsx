@@ -10,6 +10,10 @@ function MyTrips() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [viewingTripId, setViewingTripId] = useState(null);
+  const [unsavingTripId, setUnsavingTripId] = useState(null);
+
+
   // ============================================
   // Fetch saved trips
   // ============================================
@@ -18,26 +22,33 @@ function MyTrips() {
 
     const fetchSavedTrips = async () => {
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      setIsLoading(true);
+      setError("");
+
       try {
-
-        const token = localStorage.getItem("token");
-
-        // No JWT token
-        if (!token) {
-          navigate("/login");
-          return;
-        }
 
         const response = await fetch(
           "/api/saved-itineraries",
           {
             method: "GET",
-
             headers: {
               "Authorization": `Bearer ${token}`
             }
           }
         );
+
+        console.log(
+          "Saved trips API response status:",
+          response.status
+        );
+
 
         // JWT expired / unauthorized
         if (response.status === 401) {
@@ -46,13 +57,65 @@ function MyTrips() {
           return;
         }
 
+
         if (!response.ok) {
+
+          let errorMessage =
+            `Failed to load saved trips. Status: ${response.status}`;
+
+          try {
+
+            const contentType =
+              response.headers.get("content-type");
+
+            if (
+              contentType &&
+              contentType.includes("application/json")
+            ) {
+
+              const errorData = await response.json();
+
+              if (errorData.message) {
+                errorMessage = errorData.message;
+              }
+
+            } else {
+
+              const errorText = await response.text();
+
+              if (errorText) {
+                errorMessage = errorText;
+              }
+
+            }
+
+          } catch (error) {
+
+            console.error(
+              "Could not read saved trips error:",
+              error
+            );
+
+          }
+
+          throw new Error(errorMessage);
+        }
+
+
+        const data = await response.json();
+
+        console.log(
+          "Saved trips data:",
+          JSON.stringify(data, null, 2)
+        );
+
+
+        if (!Array.isArray(data)) {
           throw new Error(
-            "Failed to load your saved trips."
+            "Invalid saved trips data received from the server."
           );
         }
 
-        const data = await response.json();
 
         setTrips(data);
 
@@ -62,6 +125,8 @@ function MyTrips() {
           "Error fetching saved trips:",
           error
         );
+
+        setTrips([]);
 
         setError(
           error.message ||
@@ -73,6 +138,7 @@ function MyTrips() {
         setIsLoading(false);
 
       }
+
     };
 
     fetchSavedTrips();
@@ -86,45 +152,106 @@ function MyTrips() {
 
   const handleViewItinerary = async (tripId) => {
 
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (!tripId) {
+      setError("Trip ID is missing.");
+      return;
+    }
+
+    setViewingTripId(tripId);
+    setError("");
+
     try {
-
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        navigate("/login");
-        return;
-      }
 
       const response = await fetch(
         `/api/ai/trips/${tripId}`,
         {
           method: "GET",
-
           headers: {
             "Authorization": `Bearer ${token}`
           }
         }
       );
 
+      console.log(
+        "View itinerary response status:",
+        response.status
+      );
+
+
+      // JWT expired / unauthorized
       if (response.status === 401) {
         localStorage.removeItem("token");
         navigate("/login");
         return;
       }
 
+
       if (!response.ok) {
-        throw new Error(
-          "Unable to load this itinerary."
-        );
+
+        let errorMessage =
+          `Unable to load this itinerary. Status: ${response.status}`;
+
+        try {
+
+          const contentType =
+            response.headers.get("content-type");
+
+          if (
+            contentType &&
+            contentType.includes("application/json")
+          ) {
+
+            const errorData = await response.json();
+
+            if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+
+          } else {
+
+            const errorText = await response.text();
+
+            if (errorText) {
+              errorMessage = errorText;
+            }
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            "Could not read itinerary error:",
+            error
+          );
+
+        }
+
+        throw new Error(errorMessage);
       }
+
 
       const data = await response.json();
 
-      /*
-       * The backend returns the stored AI itinerary.
-       * Send that complete itinerary to the existing
-       * Itinerary page through React Router state.
-       */
+      console.log(
+        "Itinerary loaded successfully:",
+        data
+      );
+
+
+      if (!data || typeof data !== "object") {
+        throw new Error(
+          "Invalid itinerary data received from the server."
+        );
+      }
+
+
       navigate("/itinerary", {
         state: data
       });
@@ -141,7 +268,12 @@ function MyTrips() {
         "Unable to open the itinerary."
       );
 
+    } finally {
+
+      setViewingTripId(null);
+
     }
+
   };
 
 
@@ -151,39 +283,92 @@ function MyTrips() {
 
   const handleUnsave = async (tripId) => {
 
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (!tripId) {
+      setError("Trip ID is missing.");
+      return;
+    }
+
+    setUnsavingTripId(tripId);
+    setError("");
+
     try {
-
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        navigate("/login");
-        return;
-      }
 
       const response = await fetch(
         `/api/saved-itineraries/${tripId}`,
         {
           method: "DELETE",
-
           headers: {
             "Authorization": `Bearer ${token}`
           }
         }
       );
 
+      console.log(
+        "Unsave response status:",
+        response.status
+      );
+
+
+      // JWT expired / unauthorized
       if (response.status === 401) {
         localStorage.removeItem("token");
         navigate("/login");
         return;
       }
 
+
       if (!response.ok) {
-        throw new Error(
-          "Unable to remove the saved itinerary."
-        );
+
+        let errorMessage =
+          `Unable to remove the saved itinerary. Status: ${response.status}`;
+
+        try {
+
+          const contentType =
+            response.headers.get("content-type");
+
+          if (
+            contentType &&
+            contentType.includes("application/json")
+          ) {
+
+            const errorData = await response.json();
+
+            if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+
+          } else {
+
+            const errorText = await response.text();
+
+            if (errorText) {
+              errorMessage = errorText;
+            }
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            "Could not read unsave error:",
+            error
+          );
+
+        }
+
+        throw new Error(errorMessage);
       }
 
-      // Remove the trip from the screen immediately
+
+      // Remove the trip from the screen
       setTrips((previousTrips) =>
         previousTrips.filter(
           (trip) => trip.tripId !== tripId
@@ -202,7 +387,12 @@ function MyTrips() {
         "Unable to remove the itinerary."
       );
 
+    } finally {
+
+      setUnsavingTripId(null);
+
     }
+
   };
 
 
@@ -221,12 +411,92 @@ function MyTrips() {
 
       </div>
     );
+
+  }
+
+
+  // ============================================
+  // Full page error state
+  // ============================================
+
+  if (error && trips.length === 0) {
+
+    return (
+      <div className="my-trips-page">
+
+        <nav className="my-trips-navbar">
+
+          <div className="my-trips-brand">
+            TripGenie <span>AI</span>
+          </div>
+
+          <div className="my-trips-nav-links">
+
+            <button
+              className="my-trips-nav-link"
+              onClick={() => navigate("/dashboard")}
+            >
+              Dashboard
+            </button>
+
+            <button
+              className="my-trips-nav-link active"
+              onClick={() => navigate("/my-trips")}
+            >
+              My Trips
+            </button>
+
+            <button
+              className="my-trips-nav-link"
+              onClick={() => navigate("/profile")}
+            >
+              Profile
+            </button>
+
+            <button
+              className="my-trips-logout"
+              onClick={() => {
+                localStorage.removeItem("token");
+                navigate("/login");
+              }}
+            >
+              Logout
+            </button>
+
+          </div>
+
+        </nav>
+
+
+        <div className="my-trips-error-state">
+
+          <h2>
+            Unable to load your trips
+          </h2>
+
+          <p>
+            {error}
+          </p>
+
+          <button
+            className="create-trip-button"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </button>
+
+        </div>
+
+      </div>
+    );
+
   }
 
 
   return (
 
     <div className="my-trips-page">
+
 
       {/* ======================================
           Navigation Bar
@@ -238,6 +508,7 @@ function MyTrips() {
           TripGenie <span>AI</span>
         </div>
 
+
         <div className="my-trips-nav-links">
 
           <button
@@ -247,6 +518,7 @@ function MyTrips() {
             Dashboard
           </button>
 
+
           <button
             className="my-trips-nav-link active"
             onClick={() => navigate("/my-trips")}
@@ -254,12 +526,14 @@ function MyTrips() {
             My Trips
           </button>
 
+
           <button
             className="my-trips-nav-link"
             onClick={() => navigate("/profile")}
           >
             Profile
           </button>
+
 
           <button
             className="my-trips-logout"
@@ -282,6 +556,7 @@ function MyTrips() {
 
       <main className="my-trips-content">
 
+
         <div className="my-trips-header">
 
           <div>
@@ -300,6 +575,7 @@ function MyTrips() {
             </p>
 
           </div>
+
 
           <button
             className="create-trip-button"
@@ -385,6 +661,7 @@ function MyTrips() {
                 <div className="trip-details">
 
                   <div>
+
                     <span>
                       Budget
                     </span>
@@ -394,10 +671,12 @@ function MyTrips() {
                         trip.budget
                       ).toLocaleString("en-IN")}
                     </strong>
+
                   </div>
 
 
                   <div>
+
                     <span>
                       Travel Style
                     </span>
@@ -405,10 +684,12 @@ function MyTrips() {
                     <strong>
                       {trip.travelStyle}
                     </strong>
+
                   </div>
 
 
                   <div>
+
                     <span>
                       Status
                     </span>
@@ -416,6 +697,7 @@ function MyTrips() {
                     <strong>
                       {trip.status}
                     </strong>
+
                   </div>
 
                 </div>
@@ -425,24 +707,37 @@ function MyTrips() {
 
                   <button
                     className="view-itinerary-button"
+                    disabled={
+                      viewingTripId === trip.tripId ||
+                      unsavingTripId !== null
+                    }
                     onClick={() =>
                       handleViewItinerary(
                         trip.tripId
                       )
                     }
                   >
-                    View Itinerary
+                    {viewingTripId === trip.tripId
+                      ? "Loading..."
+                      : "View Itinerary"}
                   </button>
+
 
                   <button
                     className="unsave-button"
+                    disabled={
+                      unsavingTripId === trip.tripId ||
+                      viewingTripId !== null
+                    }
                     onClick={() =>
                       handleUnsave(
                         trip.tripId
                       )
                     }
                   >
-                    Unsave
+                    {unsavingTripId === trip.tripId
+                      ? "Removing..."
+                      : "Unsave"}
                   </button>
 
                 </div>

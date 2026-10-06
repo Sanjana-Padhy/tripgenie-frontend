@@ -520,3 +520,65 @@
   }
 
 }
+
+/* ========================================= */
+/* Full Page Error State */
+/* ========================================= */
+
+.my-trips-error-state {
+  max-width: 500px;
+  margin: 100px auto;
+  padding: 40px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+
+  text-align: center;
+
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+
+.my-trips-error-state h2 {
+  margin: 0 0 10px;
+
+  color: #0f172a;
+
+  font-size: 24px;
+}
+
+
+.my-trips-error-state p {
+  margin: 0 0 25px;
+
+  color: #64748b;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+
+/* ========================================= */
+/* Disabled Buttons */
+/* ========================================= */
+
+.view-itinerary-button:disabled,
+.unsave-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+.view-itinerary-button:disabled:hover {
+  background: #7c3aed;
+}
+
+
+.unsave-button:disabled:hover {
+  border-color: #e2e8f0;
+  color: #475569;
+}
